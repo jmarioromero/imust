@@ -1,27 +1,15 @@
 //var element = document.querySelector("#greeting");
 //element.innerText = "Hello, world!";
-var fb = new Firebase("https://incandescent-inferno-4098.firebaseio.com/rems");
+var FirebaseJS = new Firebase("https://incandescent-inferno-4098.firebaseio.com");
 /*
-fb.push({
-  content: '',
-  date_added: Firebase.ServerValue.TIMESTAMP,
-  date_modified: Firebase.ServerValue.TIMESTAMP,
-  title: ''
-});
-fb.push({
-  content: '',
-  title: '',
-  date_added: Firebase.ServerValue.TIMESTAMP,
-  date_modified: Firebase.ServerValue.TIMESTAMP
-});
+for(var _i=1;_i<11;_i++)
+  FirebaseJS.push({
+    content: 'Content ' + _i,
+    title: 'Title' + _i,
+    date_added: Firebase.ServerValue.TIMESTAMP,
+    date_modified: Firebase.ServerValue.TIMESTAMP
+  });
 */
-fb.on("value", function(snapshot) {
-  console.log(snapshot.val());
-}, function (errorObject) {
-  console.log("The read failed: " + errorObject.code);
-});
-
-
 /*
 var ref = new Firebase("https://dinosaur-facts.firebaseio.com/");
 ref.child("stegosaurus").child("height").on("value", function(stegosaurusHeightSnapshot) {
@@ -41,7 +29,6 @@ ref.child("stegosaurus").child("height").on("value", function(stegosaurusHeightS
   });
 });
 */
-
 /***********
  * UTILJS
  **********/
@@ -55,6 +42,11 @@ var UtilJS = (function() {
     getParamURL: function(_param){
       var _v = location.search.match(new RegExp('[\?\&]' + _param + '=([^\&]*)(\&?)', 'i'))
       return _v ? _v[1] : false
+    },
+    getListData: function(_doc, _fn) {
+      FirebaseJS.child(_doc).on('value', function(_snapshot) {
+          if(_fn) _fn(_snapshot)
+      });
     }
   }
 }());
@@ -93,21 +85,28 @@ var CoreJS = (function(UtilJS) {
       } else console.debug('There aren\'t components registered!')
     }
   }
-}(UtilJS));
+}(UtilJS || {}));
 CoreJS.init();
 /***********
  * MODULES
  **********/
-
 var Mod = (function() {
   return {
     //component: function() { return 'homepage'; },
     name: function() { return 'Mod'; },
     init: function() {
       console.debug('Call init method from ' + this.name())
+      UtilJS.getListData('rems', function(_snapshot){
+        _snapshot.forEach(function(_item) {
+          _item = _item.val()
+          now = new Date(_item.date_added)
+          console.log(now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDay())
+          UtilJS.jsonStringify(_item, true)
+        });
+      })
     }
   }
-}());
+}(UtilJS || {}));
 
 CoreJS.registerMod(Mod);
 
@@ -119,6 +118,6 @@ var Mod2 = (function() {
       console.debug('Call init method from ' + this.name())
     }
   }
-}());
+}(UtilJS || {}));
 
 CoreJS.registerMod(Mod2);

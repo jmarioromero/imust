@@ -1,5 +1,8 @@
 //var element = document.querySelector("#greeting");
 //element.innerText = "Hello, world!";
+var fb = new Firebase("https://incandescent-inferno-4098.firebaseio.com");
+
+fb.set({ name: "Alex Wolfe" });
 /***********
  * UTILJS
  **********/
@@ -17,9 +20,15 @@ var coreJS = (function(util) {
   var _moduleList = {};
   return {
     registerMod: function(_mod) {
-      console.debug('este es un ' + _mod.getControl());
-      _moduleList[_mod.getControl()] = _mod;
 
+      var _controller = _mod.getController()
+      var _modName = _mod.getName()
+
+      _mods = _moduleList[_controller]
+      _mods = _mods ? _mods : {}
+      _mods[_modName] = _mod
+      _moduleList[_controller] = _mods
+      console.log(_moduleList);
     },
     init: function() {
       window.onload = function() { coreJS.load(); };
@@ -41,23 +50,25 @@ coreJS.init();
 /***********
  * MODULES
  **********/
-function Module = {
-  id: 'module',
-  control: 'homepage',
-  init: function() {
-    console.debug('call init() method');
-    console.debug('{ id:' + this.id + ', control:' + this.control +  '}');
-  }
-};
 
-var _mod = (function() {
-  var id = 'module'
+var Mod = (function() {
   return {
-    control: function() { return 'homepage'; },
-    id: function() { return id; },
+    getController: function() { return 'homepage'; },
+    getName: function() { return 'mod1'; },
     init: function() {
     }
   }
 }());
 
-coreJS.registerMod(Module);
+coreJS.registerMod(Mod);
+
+var Mod2 = (function() {
+  return {
+    getController: function() { return 'homepage'; },
+    getName: function() { return 'mod2'; },
+    init: function() {
+    }
+  }
+}());
+
+coreJS.registerMod(Mod2);

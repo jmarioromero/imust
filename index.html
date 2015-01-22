@@ -1,16 +1,31 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-  <title>hello</title>
+  <title>IMustToDo</title>
 
   <link rel="stylesheet" href="styles.css">
-</head>
 
+</head>
 <body>
-  <div id="greeting"></div>
+
+  <div id="container">
+    <section></section>
+  </div>
+
+  <div class="hidden" id="templates">
+
+    <div id="mod-tmpl">
+      <article class="color1 mod-item">
+        <h2>{{title}}</h2>
+        <p>{{content}}</p>
+        <em>< {{date_added}} ></em>
+      </article>
+    </div>
+
+  </div>
 
   <script src="https://cdn.firebase.com/js/client/2.1.1/firebase.js"></script>
   <script src="main.js"></script>
+
 </body>
 </html>

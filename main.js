@@ -32,15 +32,24 @@ ref.child("stegosaurus").child("height").on("value", function(stegosaurusHeightS
 /***********
  * UTILJS
  **********/
+String.prototype.toDOM = function() {
+  var d=document
+     ,i
+     ,a=d.createElement('div')
+     ,b=d.createDocumentFragment();
+  a.innerHTML=this;
+  while(i=a.firstChild)b.appendChild(i);
+  return b;
+};
 var UtilJS = (function() {
   return {
     jsonStringify: function(_jsonObj, _log) {
       var _s = JSON.stringify(_jsonObj, null, 2)
-      if(_log) console.log('---------------\n' + _s)
+      if(_log) console.log('---------------\n'+_s)
       return _s
     },
     getParamURL: function(_p){
-      var _v = location.search.match(new RegExp('[\?\&]' + _p + '=([^\&]*)(\&?)', 'i'))
+      var _v = location.search.match(new RegExp('[\?\&]'+_p +'=([^\&]*)(\&?)', 'i'))
       return _v ? _v[1] : false
     },
     getListData: function(_doc, _fn) {
@@ -50,21 +59,28 @@ var UtilJS = (function() {
     },
     formatDate: function(_ts) {
       var options = {
-        month: '2-digit',
+        month: 'short',
         day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        year: 'numeric'//,
+        //hour: '2-digit',
+        //minute: '2-digit',
+        //second: '2-digit'
       }
       return (new Intl.DateTimeFormat(undefined, options)).format(new Date(_ts))
+    },
+    getHTML: function(_tmpl, _item) {
+      var _tmplTmp = _tmpl
+      Object.getOwnPropertyNames(_item).forEach(function(_key) {
+        _tmplTmp = _tmplTmp.replace(new RegExp('{{'+_key+'}}', 'ig'), _item[_key]);
+      });
+      return _tmplTmp
     }
   }
 }());
 /***********
  * COREJS
  **********/
-var CoreJS = (function(UtilJS) {
+var CoreJS = (function() {
   var _modList = {}
   return {
     registerMod: function(_mod) {
@@ -76,7 +92,7 @@ var CoreJS = (function(UtilJS) {
       _mods = _modList[_cmp] || {}
       _mods[_mod.name()] = _mod
       _modList[_cmp] = _mods
-      UtilJS.jsonStringify(_modList, true)
+      //UtilJS.jsonStringify(_modList, true)
     },
     init: function() {
       window.onload = function() { CoreJS.load() }
@@ -90,13 +106,13 @@ var CoreJS = (function(UtilJS) {
           for (_j in _mods) {
             _mod = _mods[_j]
             if (_mod.init) _mod.init()
-            else console.error(_mod.name() + ' module haven\'t \'init()\' method.')
+            else console.error(_mod.name()+' module haven\'t \'init()\' method.')
           }
-        } else console.debug('There aren\'t modules registered in ' + _cmp)
+        } else console.debug('There aren\'t modules registered in '+_cmp)
       } else console.debug('There aren\'t components registered!')
     }
   }
-}(UtilJS || {}));
+}());
 CoreJS.init();
 /***********
  * MODULES
@@ -104,30 +120,37 @@ CoreJS.init();
 var Mod = (function() {
   return {
     //component: function() { return 'homepage'; },
-    name: function() { return 'Mod'; },
+    name: function() { return 'mod' },
     init: function() {
-      console.debug('Call init method from ' + this.name())
-      UtilJS.getListData('rems', function(_snapshot){
+      console.debug('Call init method from '+Mod.name())
+      UtilJS.getListData('rems', function(_snapshot) {
+
+        var _tmpl = document.querySelector('#'+Mod.name()+'-tmpl').innerHTML
+        var _parent = document.querySelector('#container > section')
+        var _textHTML = '';
+
         _snapshot.forEach(function(_item) {
           _item = _item.val()
-          console.log(UtilJS.formatDate(_item.date_added))
-          //UtilJS.jsonStringify(_item, true)
+          _item.date_added = UtilJS.formatDate(_item.date_added)
+          _textHTML += UtilJS.getHTML(_tmpl, _item)
         });
+
+        _parent.appendChild(_textHTML.toDOM());
       })
     }
   }
-}(UtilJS || {}));
+}());
 
 CoreJS.registerMod(Mod);
 
 var Mod2 = (function() {
   return {
     component: function() { return 'homepage' },
-    name: function() { return 'Mod2' },
+    name: function() { return 'mod2' },
     init: function() {
-      console.debug('Call init method from ' + this.name())
+      console.debug('Call init method from '+Mod2.name())
     }
   }
-}(UtilJS || {}));
+}());
 
 CoreJS.registerMod(Mod2);

@@ -39,14 +39,25 @@ var UtilJS = (function() {
       if(_log) console.log('---------------\n' + _s)
       return _s
     },
-    getParamURL: function(_param){
-      var _v = location.search.match(new RegExp('[\?\&]' + _param + '=([^\&]*)(\&?)', 'i'))
+    getParamURL: function(_p){
+      var _v = location.search.match(new RegExp('[\?\&]' + _p + '=([^\&]*)(\&?)', 'i'))
       return _v ? _v[1] : false
     },
     getListData: function(_doc, _fn) {
       FirebaseJS.child(_doc).on('value', function(_snapshot) {
           if(_fn) _fn(_snapshot)
       });
+    },
+    formatDate: function(_ts) {
+      var options = {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }
+      return (new Intl.DateTimeFormat(undefined, options)).format(new Date(_ts))
     }
   }
 }());
@@ -99,9 +110,8 @@ var Mod = (function() {
       UtilJS.getListData('rems', function(_snapshot){
         _snapshot.forEach(function(_item) {
           _item = _item.val()
-          now = new Date(_item.date_added)
-          console.log(now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDay())
-          UtilJS.jsonStringify(_item, true)
+          console.log(UtilJS.formatDate(_item.date_added))
+          //UtilJS.jsonStringify(_item, true)
         });
       })
     }

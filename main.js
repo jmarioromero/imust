@@ -125,7 +125,7 @@ var Mod = (function() {
       console.debug('Call init method from '+Mod.name())
       UtilJS.getListData('rems', function(_snapshot) {
 
-        var _tmpl = document.querySelector('#'+Mod.name()+'-tmpl').innerHTML
+        var _tmpl = document.querySelector('#'+Mod.name()+'-tmpl .show-section').innerHTML
         var _parent = document.querySelector('#container > section')
         var _textHTML = '';
 
@@ -137,7 +137,7 @@ var Mod = (function() {
 
         _parent.appendChild(_textHTML.toDOM());
       })
-    }
+    },
   }
 }());
 

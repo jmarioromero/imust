@@ -1,6 +1,6 @@
 //var element = document.querySelector("#greeting");
 //element.innerText = "Hello, world!";
-var FirebaseJS = new Firebase("https://incandescent-inferno-4098.firebaseio.com");
+var firebaseURL = 'https://incandescent-inferno-4098.firebaseio.com';
 /*
 for(var _i=1;_i<11;_i++)
   FirebaseJS.push({
@@ -32,125 +32,161 @@ ref.child("stegosaurus").child("height").on("value", function(stegosaurusHeightS
 /***********
  * UTILJS
  **********/
+
 String.prototype.toDOM = function() {
-  var d=document
-     ,i
-     ,a=d.createElement('div')
-     ,b=d.createDocumentFragment();
-  a.innerHTML=this;
-  while(i=a.firstChild)b.appendChild(i);
-  return b;
+  var elm = document.createElement('div'),
+      docfrag = document.createDocumentFragment();
+  elm.innerHTML = this;
+  while (child = elm.firstChild)
+    docfrag.appendChild(child);
+  return docfrag;
 };
-var UtilJS = (function() {
+
+var UtilMod = (function() {
   return {
-    jsonStringify: function(_jsonObj, _log) {
-      var _s = JSON.stringify(_jsonObj, null, 2)
-      if(_log) console.log('---------------\n'+_s)
-      return _s
+
+    jsonStringify: function(jsonobj, printlog) {
+      var jsonstr = JSON.stringify(jsonobj, null, 2);
+      if(printlog)
+        console.log(jsonstr);
+      return jsonstr;
     },
-    getParamURL: function(_p){
-      var _v = location.search.match(new RegExp('[\?\&]'+_p +'=([^\&]*)(\&?)', 'i'))
-      return _v ? _v[1] : false
+
+    getParamURL: function(param) {
+      var regex = new RegExp('[\?\&]' + param + '=([^\&]*)(\&?)', 'i');
+      var matches = location.search.match(regex);
+      return matches ? matches[1] || false : false;
     },
-    getListData: function(_doc, _fn) {
-      FirebaseJS.child(_doc).on('value', function(_snapshot) {
-          if(_fn) _fn(_snapshot)
+
+    getListData: function(docname, callback) {
+      var firebase = new Firebase(firebaseURL);
+      firebase.child(docname).on('value', function(snapshot) {
+        if(callback)
+          callback(snapshot);
       });
     },
-    formatDate: function(_ts) {
+
+    formatDate: function(timestamp) {
       var options = {
         month: 'short',
         day: '2-digit',
-        year: 'numeric'//,
-        //hour: '2-digit',
-        //minute: '2-digit',
-        //second: '2-digit'
-      }
-      return (new Intl.DateTimeFormat(undefined, options)).format(new Date(_ts))
+        year: 'numeric'
+      };
+      var date = new Date(timestamp);
+      var datetimeformat = new Intl.DateTimeFormat(undefined, options);
+      return datetimeformat.format(date);
     },
-    getHTML: function(_tmpl, _item) {
-      var _tmplTmp = _tmpl
-      Object.getOwnPropertyNames(_item).forEach(function(_key) {
-        _tmplTmp = _tmplTmp.replace(new RegExp('{{'+_key+'}}', 'ig'), _item[_key]);
+
+    getContentTemplate: function(modname) {
+      var getimport = document.querySelector('#' + modname + '-tpl');
+      return getimport.import.querySelector('body').innerHTML;
+    },
+
+    getHTML: function(template, obj) {
+      var templateTmp = template;
+      Object.getOwnPropertyNames(obj).forEach(function (key) {
+        var regex = new RegExp('{{' + key + '}}', 'ig');
+        templateTmp = templateTmp.replace(regex, obj[key]);
       });
-      return _tmplTmp
+      return templateTmp;
     }
-  }
+  };
 }());
 /***********
  * COREJS
  **********/
-var CoreJS = (function() {
-  var _modList = {}
+var CoreMod = (function () {
+  var modulelist = {};
   return {
-    registerMod: function(_mod) {
-      if(!_mod.hasOwnProperty('name')) {
-        console.error('Should establish a name to the module')
+
+    registerModule: function (mod) {
+
+      if(!mod.hasOwnProperty('name')) {
+        console.error('Should establish a name to the module.');
         return;
       }
-      var _cmp = _mod.hasOwnProperty('component') ? _mod.component() : 'default'
-      _mods = _modList[_cmp] || {}
-      _mods[_mod.name()] = _mod
-      _modList[_cmp] = _mods
-      //UtilJS.jsonStringify(_modList, true)
+
+      var cmp = mod.hasOwnProperty('component') ? mod.component() : 'default';
+      var mods = modulelist[cmp] || {};
+      mods[mod.name()] = mod;
+      modulelist[cmp] = mods;
+      //UtilMod.jsonStringify(modulelist, true);
     },
-    init: function() {
-      window.onload = function() { CoreJS.load() }
+
+    init: function () {
+      window.onload = function () {
+        CoreMod.load();
+      };
     },
-    load: function() {
-      console.debug('excecute method load in CoreJS!')
-      var _cmp = UtilJS.getParamURL('cmp') || 'default'
-      if(Object.keys(_modList).length) {
-        _mods = _modList[_cmp] || {}
-        if(Object.keys(_mods).length) {
-          for (_j in _mods) {
-            _mod = _mods[_j]
-            if (_mod.init) _mod.init()
-            else console.error(_mod.name()+' module haven\'t \'init()\' method.')
+
+    load: function () {
+      console.debug('excecute method load in CoreJS!');
+      var cmp = UtilMod.getParamURL('cmp') || 'default';
+      if(Object.keys(modulelist).length) {
+        var mods = modulelist[cmp] || {};
+        if(Object.keys(mods).length) {
+          for (var key in mods) {
+            var mod = mods[key];
+            if (mod.hasOwnProperty('init'))
+              mod.init();
+            else
+              console.error(mod.name()+' module haven\'t \'init()\' method.');
           }
-        } else console.debug('There aren\'t modules registered in '+_cmp)
-      } else console.debug('There aren\'t components registered!')
+        }
+        else
+          console.debug('There aren\'t modules registered in ' + cmp);
+      }
+      else
+        console.debug('There aren\'t components registered!');
     }
-  }
+  };
 }());
-CoreJS.init();
+CoreMod.init();
 /***********
  * MODULES
  **********/
-var Mod = (function() {
+var Mod = (function () {
+
   return {
     //component: function() { return 'homepage'; },
-    name: function() { return 'mod' },
-    init: function() {
-      console.debug('Call init method from '+Mod.name())
-      UtilJS.getListData('rems', function(_snapshot) {
+    name: function () { return 'mod'; },
 
-        var _tmpl = document.querySelector('#'+Mod.name()+'-tmpl .show-section').innerHTML
-        var _parent = document.querySelector('#container > section')
-        var _textHTML = '';
-
-        _snapshot.forEach(function(_item) {
-          _item = _item.val()
-          _item.date_added = UtilJS.formatDate(_item.date_added)
-          _textHTML += UtilJS.getHTML(_tmpl, _item)
-        });
-
-        _parent.appendChild(_textHTML.toDOM());
-      })
+    init: function () {
+      console.debug('Call init method from ' + Mod.name());
+      UtilMod.getListData('rems', Mod.show);
     },
-  }
-}());
 
-CoreJS.registerMod(Mod);
+    show: function (snapshot) {
 
-var Mod2 = (function() {
-  return {
-    component: function() { return 'homepage' },
-    name: function() { return 'mod2' },
-    init: function() {
-      console.debug('Call init method from '+Mod2.name())
+      var tpl = UtilMod.getContentTemplate(Mod.name());
+      var parent = document.querySelector('#container section');
+
+      var textHTML = '';
+
+      snapshot.forEach(function (item) {
+        var item = item.val();
+        item.date_added = UtilMod.formatDate(item.date_added);
+        textHTML += UtilMod.getHTML(tpl, item);
+      });
+      console.log(textHTML.toDOM());
+
+      parent.appendChild(textHTML.toDOM());
     }
-  }
+  };
 }());
 
-CoreJS.registerMod(Mod2);
+CoreMod.registerModule(Mod);
+
+var Mod2 = (function () {
+
+  return {
+
+    component: function() { return 'homepage'; },
+    name: function () { return 'mod2'; },
+    init: function () {
+      console.debug('Call init method from ' + Mod2.name());
+    }
+  };
+}());
+
+CoreMod.registerModule(Mod2);

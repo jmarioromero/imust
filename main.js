@@ -1,6 +1,6 @@
 //var element = document.querySelector("#greeting");
 //element.innerText = "Hello, world!";
-var firebaseURL = 'https://incandescent-inferno-4098.firebaseio.com';
+//var firebaseURL = 'https://incandescent-inferno-4098.firebaseio.com';
 /*
 for(var _i=1;_i<11;_i++)
   FirebaseJS.push({
@@ -32,6 +32,9 @@ ref.child("stegosaurus").child("height").on("value", function(stegosaurusHeightS
 /***********
  * UTILJS
  **********/
+var Constants = {
+  remsURL: 'https://incandescent-inferno-4098.firebaseio.com/rems.json'
+}
 
 String.prototype.toDOM = function() {
   var elm = document.createElement('div'),
@@ -57,7 +60,7 @@ var UtilMod = (function() {
       var matches = location.search.match(regex);
       return matches ? matches[1] || false : false;
     },
-
+    /*
     getListData: function(docname, callback) {
       var firebase = new Firebase(firebaseURL);
       firebase.child(docname).on('value', function(snapshot) {
@@ -65,7 +68,7 @@ var UtilMod = (function() {
           callback(snapshot);
       });
     },
-
+    */
     formatDate: function(timestamp) {
       var options = {
         month: 'short',
@@ -89,6 +92,29 @@ var UtilMod = (function() {
         templateTmp = templateTmp.replace(regex, obj[key]);
       });
       return templateTmp;
+    },
+
+    callAjax: function(url, data, callback) {
+      var xmlhttp = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+      xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+          if(callback)
+            callback(xmlhttp.responseText);
+      };
+      xmlhttp.open('POST', url, true);
+      xmlhttp.send(data);
+    },
+
+    jsonp: function(url, callback) {
+      var callbackname = 'jsonp_callback_' + Math.round(100000 * Math.random());
+      window[callbackname] = function(data) {
+          delete window[callbackname];
+          document.body.removeChild(script);
+          callback(data);
+      };
+      var script = document.createElement('script');
+      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackname;
+      document.body.appendChild(script);
     }
   };
 }());
@@ -153,7 +179,13 @@ var Mod = (function () {
 
     init: function () {
       console.debug('Call init method from ' + Mod.name());
-      UtilMod.getListData('rems', Mod.show);
+      UtilMod.jsonp(Constants.remsURL, Mod.show);
+      /*
+      UtilMod.callAjax(Constants.remsURL, '', function(data) {
+        console.log(data);
+      });
+      */
+      //UtilMod.getListData('rems', Mod.show);
     },
 
     show: function (snapshot) {
@@ -163,11 +195,13 @@ var Mod = (function () {
 
       var textHTML = '';
 
-      snapshot.forEach(function (item) {
-        var item = item.val();
+      //snapshot.forEach(function (item) {
+      //  var item = item.val();
+      for (var key in snapshot) {
+        var item = snapshot[key];
         item.date_added = UtilMod.formatDate(item.date_added);
         textHTML += UtilMod.getHTML(tpl, item);
-      });
+      }
       console.log(textHTML.toDOM());
 
       parent.appendChild(textHTML.toDOM());

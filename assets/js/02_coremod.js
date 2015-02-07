@@ -28,13 +28,12 @@ var CoreMod = (function () {
       if(Object.keys(modulelist).length) {
         var mods = modulelist[cmp] || {};
         if(Object.keys(mods).length) {
-          for (var key in mods) {
-            var mod = mods[key];
+          mods.loop(function(mod) {
             if (mod.hasOwnProperty('init'))
               mod.init();
             else
               console.error(mod.name()+' module haven\'t \'init()\' method.');
-          }
+          });
         }
         else
           console.debug('There aren\'t modules registered in ' + cmp);

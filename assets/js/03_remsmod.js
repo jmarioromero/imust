@@ -52,12 +52,23 @@ var RemindersMod = (function(d) {
       var form = d.querySelector('#reminderform');
       var clearbtn = form.querySelector('.buttons .btn-default');
       var successbtn = form.querySelector('.buttons .btn-success');
+      var list = d.querySelector('#reminderlist');
+      var deletebtns = list.querySelectorAll('.delete');
+      var editbtns = list.querySelectorAll('.edit');
       // Clean action
       UtilMod.addEvent(clearbtn, 'click', function() {
         UtilMod.cleanInputs(form);
       });
       // Create reminder action
       UtilMod.addEvent(successbtn, 'click', RemindersMod.create);
+      // Delete reminder action
+      UtilMod.addEvent(deletebtns, 'click', function() { 
+        RemindersMod.delete(this.getAttribute('key'));
+      });
+      // Edit reminder action
+      UtilMod.addEvent(editbtns, 'click', function() { 
+        RemindersMod.edit(this.getAttribute('key'));
+      });
     },
 
     show: function() {
@@ -99,18 +110,24 @@ var RemindersMod = (function(d) {
     },
 
     create: function() {
-
       var data = UtilMod.getFormData('#reminderform');
       UtilMod.push(data, function(key) {
         if(key) {
           var articles = d.querySelector('#reminderlist');
-
           data.date_added = UtilMod.formatDate(data.date_added);
           data['key'] = key;
           var item = UtilMod.getHTML(HTMLTpl.article, data);
           articles.appendFirst(item.toDOM());
         }
       });
+    },
+
+    delete: function(key) {
+      console.log(key)
+    },
+
+    edit: function(key) {
+      console.log(key)
     }
   };
 }(document));

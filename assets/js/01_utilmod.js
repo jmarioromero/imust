@@ -27,6 +27,10 @@ Object.prototype.loop = function(callback) {
   }
 };
 
+Object.prototype.isNodeList = function() {
+  return (this instanceof NodeList);
+};
+
 HTMLElement.prototype.appendFirst = function(childnode){
   if(this.firstChild)
     this.insertBefore(childnode, this.firstChild);
@@ -89,6 +93,22 @@ var UtilMod = (function(d) {
     },
 
     addEvent: function(elm, event, callback) {
+      console.log('--------------')
+      //console.log(elm)
+      if(elm.isNodeList())
+        elm.loop(function(obj) {
+          //console.log(obj)
+          UtilMod.setEvent(obj, event, callback);  
+        });
+      else
+        UtilMod.setEvent(elm, event, callback);
+    },
+
+    setEvent: function(elm, event, callback) {
+      if (elm.removeEventListener)
+          elm.removeEventListener(event);
+      else if (elm.detachEvent)
+          elm.detachEvent('on' + event);
       elm.addEventListener(event, function(evt) {
         if(callback)
           callback();

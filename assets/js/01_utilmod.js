@@ -14,13 +14,14 @@ String.prototype.toDOM = function() {
 
 Object.prototype.loop = function(callback) {
   var obj = this,
-      key = false
+      key = false,
       item = false;
   for (key in obj) {
     if (obj.hasOwnProperty(key)) {
       if(callback) {
         item = obj[key];
-        item['key'] = key;
+        if(item instanceof Object)
+          item['key'] = key;
         callback(item);
       }
     }
@@ -29,6 +30,10 @@ Object.prototype.loop = function(callback) {
 
 Object.prototype.isNodeList = function() {
   return (this instanceof NodeList);
+};
+
+Object.prototype.isHTMLElement = function() {
+  return (this instanceof HTMLElement);
 };
 
 HTMLElement.prototype.appendFirst = function(childnode){
@@ -41,14 +46,22 @@ HTMLElement.prototype.appendFirst = function(childnode){
 var UtilMod = (function(d) {
   return {
 
-    push: function(data, callback) {
-      data['date_added'] = data['date_modified'] = UtilMod.getTime();
+    callREST: function(method, data, callback, adddate) {
+      if(adddate)
+        data = UtilMod.addDateToData(data);
       data = UtilMod.jsonStringify(data);
       UtilMod.callAjax(Constants.remsURL, data, function(data) {
         data = JSON.parse(data);
-        if(callback)
-          callback(data.name);
-      });
+        if(callback) {
+          data = (method === 'POST' && data.name) ? data.name : data;
+          callback(data);
+        }
+      }, method);
+    },
+
+    addDateToData: function(data) {
+      data['date_added'] = data['date_modified'] = UtilMod.getTime();
+      return data;
     },
 
     getTime: function() {
@@ -87,37 +100,39 @@ var UtilMod = (function(d) {
           if(elm.name)
             data[elm.name] = elm.value;
         });
-        data['date_added'] = data['date_modified'] = UtilMod.getTime();
+        data = UtilMod.addDateToData(data);
       }
       return asstring ? UtilMod.jsonStringify(data) : data;
     },
 
     addEvent: function(elm, event, callback) {
-      console.log('--------------')
-      //console.log(elm)
-      if(elm.isNodeList())
-        elm.loop(function(obj) {
-          //console.log(obj)
-          UtilMod.setEvent(obj, event, callback);  
-        });
-      else
-        UtilMod.setEvent(elm, event, callback);
+      if(elm) {
+        if(elm.isNodeList()) {
+          elm.loop(function(obj) {
+            if(obj.isHTMLElement())
+              UtilMod.setEvent(obj, event, callback);
+          });
+        } else
+          UtilMod.setEvent(elm, event, callback);
+      }
     },
 
     setEvent: function(elm, event, callback) {
-      if (elm.removeEventListener)
-          elm.removeEventListener(event);
-      else if (elm.detachEvent)
-          elm.detachEvent('on' + event);
-      elm.addEventListener(event, function(evt) {
-        if(callback)
-          callback();
-        var evt = evt ? evt : window.event;
-        if(evt.preventDefault)
-          evt.preventDefault();
-        evt.returnValue = false;
-        return false;
-      });
+      if(elm) {
+        if (elm.removeEventListener)
+            elm.removeEventListener(event);
+        else if (elm.detachEvent)
+            elm.detachEvent('on' + event);
+        elm.addEventListener(event, function(evt) {
+          if(callback)
+            callback(this);
+          var evt = evt ? evt : window.event;
+          if(evt.preventDefault)
+            evt.preventDefault();
+          evt.returnValue = false;
+          return false;
+        });
+      }
     },
 
     jsonStringify: function(jsonobj, printlog, space) {

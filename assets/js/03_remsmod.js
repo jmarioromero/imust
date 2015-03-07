@@ -45,7 +45,7 @@ var RemindersMod = (function(d) {
 
     init: function() {
       console.debug('Call init method from ' + RemindersMod.name());
-      RemindersMod.show();
+      RemindersMod.list();
     },
 
     bindActions: function() {
@@ -62,16 +62,16 @@ var RemindersMod = (function(d) {
       // Create reminder action
       UtilMod.addEvent(successbtn, 'click', RemindersMod.create);
       // Delete reminder action
-      UtilMod.addEvent(deletebtns, 'click', function() { 
-        RemindersMod.delete(this.getAttribute('key'));
+      UtilMod.addEvent(deletebtns, 'click', function(elm) {
+        RemindersMod.delete(elm.getAttribute('key'));
       });
       // Edit reminder action
-      UtilMod.addEvent(editbtns, 'click', function() { 
-        RemindersMod.edit(this.getAttribute('key'));
+      UtilMod.addEvent(editbtns, 'click', function(elm) {
+        RemindersMod.edit(elm.getAttribute('key'));
       });
     },
 
-    show: function() {
+    list: function() {
 
       var formdata = {
         formtitle: 'Nuevo recordatorio',
@@ -87,7 +87,11 @@ var RemindersMod = (function(d) {
         formHTML = UtilMod.getHTML(HTMLTpl.form, formdata),
         textHTML = '';
 
-      UtilMod.jsonp(Constants.remsURL, function(snapshot) {
+      parent.appendChild(formHTML.toDOM());
+
+      UtilMod.callREST('GET', {}, function(snapshot) {
+
+        //console.log(snapshot)
 
         if(snapshot) {
           snapshot.loop(function(item) {
@@ -101,7 +105,6 @@ var RemindersMod = (function(d) {
         };
 
         textHTML = UtilMod.getHTML(HTMLTpl.reminderlist, listHTML);
-        textHTML = formHTML + textHTML;
 
         parent.appendChild(textHTML.toDOM());
 
@@ -111,15 +114,16 @@ var RemindersMod = (function(d) {
 
     create: function() {
       var data = UtilMod.getFormData('#reminderform');
-      UtilMod.push(data, function(key) {
+      UtilMod.callREST('POST', data, function(key) {
         if(key) {
           var articles = d.querySelector('#reminderlist');
           data.date_added = UtilMod.formatDate(data.date_added);
           data['key'] = key;
           var item = UtilMod.getHTML(HTMLTpl.article, data);
           articles.appendFirst(item.toDOM());
+          UtilMod.cleanInputs(d.querySelector('#reminderform'));
         }
-      });
+      }, true);
     },
 
     delete: function(key) {

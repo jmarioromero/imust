@@ -1,0 +1,5 @@
+var configComponent = {
+  'default': [
+      'reminderModule'
+    ]
+}

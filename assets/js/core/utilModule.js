@@ -1,5 +1,5 @@
 var Constants = {
-  baseURL: 'http://127.0.0.1:51792/imusttodo/',
+  baseURL: 'http://localhost/imusttodo/',
   remsURL: 'https://incandescent-inferno-4098.firebaseio.com/rems.json'
 };
 
